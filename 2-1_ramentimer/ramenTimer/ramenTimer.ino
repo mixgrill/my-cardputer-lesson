@@ -561,6 +561,14 @@ void controlTask(void *parameters) {
     vTaskDelay(pdMS_TO_TICKS(50));
   }
 }
+//キャレット位置に応じた表示文字列のテーブル
+static const char* CURSOR_STRINGS[] = {
+    "     -", // CARRET_0S (0)
+    "    - ", // CARRET_S0 (1)
+    "  -   ", // CARRET_00M (2)
+    " -    ", // CARRET_0M0 (3)
+    "-     "  // CARRET_M00 (4)
+};
 /**
  * @brief 画面表示タスク
  * @param parameters Unused. Don’t care.
@@ -583,26 +591,14 @@ void displayTask(void *parameters) {
           if (strcmp(disp_timestring, msg.timestring)!=0){
             M5Cardputer.Display.setCursor(20, 30);
             M5Cardputer.Display.println(msg.timestring);
-            strcpy(msg.timestring, disp_timestring);
+            strcpy(disp_timestring, msg.timestring);
           }
         }
         // カーソルの表示
         if (msg.type & DISP_MSG_CARRETMOVED_MASK){
-          char cursorbuff[7];
-          strcpy(cursorbuff, 
-            (msg.carret == CARRET_M00)?"-     ":
-            (
-              (msg.carret == CARRET_0M0)?" -    ":
-              (
-                (msg.carret == CARRET_00M)?"  -   ":
-                (
-                  (msg.carret == CARRET_S0)?"    - ":
-                  (
-                    msg.carret == CARRET_0S)?"     -":"      "
-                  )
-                )
-              )
-            );
+          const char* cursorbuff = (msg.carret >= CARRET_MIN && msg.carret <= CARRET_MAX) 
+                             ? CURSOR_STRINGS[msg.carret] 
+                             : "      ";
           
           M5Cardputer.Display.setCursor(20, 80);
           M5Cardputer.Display.println(cursorbuff);
